@@ -14,6 +14,10 @@
 #endif
 
 namespace Path {
+  inline bool is_android() {
+    return getenv("ANDROID_DATA") != nullptr;
+  }
+
   inline std::string openpilot_prefix() {
     return util::getenv("OPENPILOT_PREFIX", "");
   }
@@ -26,11 +30,20 @@ namespace Path {
     if (const char *env = getenv("LOG_ROOT")) {
       return env;
     }
+    if (is_android()) {
+      return "/sdcard/flowpilot/realdata";
+    }
     return Hardware::PC() ? Path::comma_home() + "/media/0/realdata" : "/data/media/0/realdata";
   }
 
   inline std::string params() {
-    return util::getenv("PARAMS_ROOT", Hardware::PC() ? (Path::comma_home() + "/params") : "/data/params");
+    if (const char *env = getenv("PARAMS_ROOT")) {
+      return env;
+    }
+    if (is_android()) {
+      return "/sdcard/flowpilot/params";
+    }
+    return Hardware::PC() ? (Path::comma_home() + "/params") : "/data/params";
   }
 
   inline std::string rsa_file() {
@@ -45,6 +58,9 @@ namespace Path {
     if (const char *env = getenv("COMMA_CACHE")) {
       return env;
     }
+    if (is_android()) {
+      return "/sdcard/flowpilot/cache";
+    }
     return "/tmp/comma_download_cache" + Path::openpilot_prefix() + "/";
   }
 
@@ -57,6 +73,9 @@ namespace Path {
  }
 
   inline std::string model_root() {
+    if (is_android()) {
+      return "/sdcard/flowpilot/models";
+    }
     return Hardware::PC() ? Path::comma_home() + "/media/0/models" : "/data/media/0/models";
   }
 }  // namespace Path

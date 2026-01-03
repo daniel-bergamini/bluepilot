@@ -2,11 +2,15 @@ import os
 import platform
 from pathlib import Path
 
-from openpilot.system.hardware import PC
+from openpilot.system.hardware import PC, ANDROID
 
 DEFAULT_DOWNLOAD_CACHE_ROOT = "/tmp/comma_download_cache"
 
 class Paths:
+  @staticmethod
+  def android_root() -> str:
+    return os.environ.get("ANDROID_STORAGE_ROOT", "/sdcard/flowpilot")
+
   @staticmethod
   def comma_home() -> str:
     return os.path.join(str(Path.home()), ".comma" + os.environ.get("OPENPILOT_PREFIX", ""))
@@ -15,6 +19,8 @@ class Paths:
   def log_root() -> str:
     if os.environ.get('LOG_ROOT', False):
       return os.environ['LOG_ROOT']
+    elif ANDROID:
+      return str(Path(Paths.android_root()) / "realdata")
     elif PC:
       return str(Path(Paths.comma_home()) / "media" / "0" / "realdata")
     else:
@@ -26,6 +32,8 @@ class Paths:
 
   @staticmethod
   def swaglog_root() -> str:
+    if ANDROID:
+      return os.path.join(Paths.android_root(), "log")
     if PC:
       return os.path.join(Paths.comma_home(), "log")
     else:
@@ -39,10 +47,14 @@ class Paths:
   def download_cache_root() -> str:
     if os.environ.get('COMMA_CACHE', False):
       return os.environ['COMMA_CACHE'] + "/"
+    if ANDROID:
+      return os.path.join(Paths.android_root(), "cache") + "/"
     return DEFAULT_DOWNLOAD_CACHE_ROOT + os.environ.get("OPENPILOT_PREFIX", "") + "/"
 
   @staticmethod
   def persist_root() -> str:
+    if ANDROID:
+      return os.path.join(Paths.android_root(), "persist")
     if PC:
       return os.path.join(Paths.comma_home(), "persist")
     else:
@@ -50,6 +62,8 @@ class Paths:
 
   @staticmethod
   def stats_root() -> str:
+    if ANDROID:
+      return os.path.join(Paths.android_root(), "stats")
     if PC:
       return str(Path(Paths.comma_home()) / "stats")
     else:
@@ -57,6 +71,8 @@ class Paths:
 
   @staticmethod
   def stats_sp_root() -> str:
+    if ANDROID:
+      return os.path.join(Paths.android_root(), "stats_sp")
     if PC:
       return str(Path(Paths.comma_home()) / "stats")
     else:
@@ -64,6 +80,8 @@ class Paths:
 
   @staticmethod
   def config_root() -> str:
+    if ANDROID:
+      return Paths.android_root()
     if PC:
       return Paths.comma_home()
     else:
@@ -77,6 +95,8 @@ class Paths:
 
   @staticmethod
   def model_root() -> str:
+    if ANDROID:
+      return str(Path(Paths.android_root()) / "models")
     if PC:
       return str(Path(Paths.comma_home()) / "media" / "0" / "models")
     else:
@@ -84,6 +104,8 @@ class Paths:
 
   @staticmethod
   def crash_log_root() -> str:
+    if ANDROID:
+      return str(Path(Paths.android_root()) / "crashes")
     if PC:
       return str(Path(Paths.comma_home()) / "community" / "crashes")
     else:
@@ -91,6 +113,8 @@ class Paths:
 
   @staticmethod
   def mapd_root() -> str:
+    if ANDROID:
+      return str(Path(Paths.android_root()) / "osm")
     if PC:
       return str(Path(Paths.comma_home()) / "media" / "0" / "osm")
     else:

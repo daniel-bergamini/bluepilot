@@ -7,10 +7,12 @@ from openpilot.system.hardware.pc.hardware import Pc
 
 TICI = os.path.isfile('/TICI')
 AGNOS = os.path.isfile('/AGNOS')
-PC = not TICI
+ANDROID = "ANDROID_DATA" in os.environ
+PC = (not TICI) and (not ANDROID)
 
 
 if TICI:
   HARDWARE = cast(HardwareBase, Tici())
 else:
+  # Android wrapper runs as a Linux-like userland with PC hardware defaults.
   HARDWARE = cast(HardwareBase, Pc())
