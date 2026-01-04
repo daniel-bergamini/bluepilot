@@ -54,6 +54,8 @@ First-Run (Android proot)
    - export CAPNP_PATH=$PWD:$PWD/cereal:$PWD/cereal/include
    - export ANDROID_STORAGE_ROOT=/sdcard/flowpilot
    - ./launch_bluepilot.sh
+6) Convenience runner (optional):
+   - scripts/bluepilot-run-android.sh
 
 Notes on Flowpilot APK
 - APK expects assets in /sdcard/flowpilot/selfdrive.
