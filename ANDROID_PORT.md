@@ -57,6 +57,15 @@ First-Run (Android proot)
 6) Convenience runner (optional):
    - scripts/bluepilot-run-android.sh
 
+Env setup script
+- Default rootfs: Ubuntu 24.04 (noble minimal).
+- Old rootfs flag: --ubuntu20 (focal).
+- Root mode: --root
+Examples:
+  - scripts/bluepilot-setup-env-android
+  - scripts/bluepilot-setup-env-android --ubuntu20
+  - scripts/bluepilot-setup-env-android --root
+
 Notes on Flowpilot APK
 - APK expects assets in /sdcard/flowpilot/selfdrive.
 - manager.py syncs assets to external storage on Android startup.

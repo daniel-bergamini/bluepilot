@@ -22,6 +22,38 @@ proot_exec() {
     proot-distro login ubuntu -- eval "$1"
 }
 
+ROOT_MODE=0
+USE_UBUNTU20=0
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --root)
+            ROOT_MODE=1
+            ;;
+        --ubuntu20)
+            USE_UBUNTU20=1
+            ;;
+        --help)
+            msg "Usage: $0 [--root] [--ubuntu20]"
+            exit 0
+            ;;
+        *)
+            fail "invalid arguements provided"
+            ;;
+    esac
+    shift
+done
+
+if [[ $USE_UBUNTU20 -eq 1 ]]; then
+    UBUNTU_VERSION="20.04"
+    ROOTFS_TAR="ubuntu-focal-core-cloudimg-arm64-root-2020.12.10.tar.gz"
+    ROOTFS_URL="https://github.com/termux/proot-distro/releases/download/v1.2-ubuntu-focal-rootfs/$ROOTFS_TAR"
+else
+    UBUNTU_VERSION="24.04"
+    ROOTFS_TAR="ubuntu-24.04-minimal-cloudimg-arm64-root.tar.gz"
+    ROOTFS_URL="https://cloud-images.ubuntu.com/minimal/releases/noble/release/$ROOTFS_TAR"
+fi
+
 add_to_file() {
     grep -qF -- "$1" "$2" || echo "$1" >> "$2"
 }
@@ -46,32 +78,67 @@ base_setup() {
     sed -i '/allow-external-apps/s/^#*//g' $HOME/.termux/termux.properties
 }
 
+download_rootfs() {
+    wget -q --show-progress --no-clobber --tries=5 "$ROOTFS_URL" -P /sdcard/flowpilot/Downloads/
+}
+
 setup_nonroot_env() {
     info "Preparing to install bluepilot non-root env ..."
 
-    proot-distro install ubuntu || info "ubuntu already installed.. skipping"
-
     rm -f /data/data/com.termux/files/usr/bin/login-bluepilot
-    echo proot-distro login ubuntu >> /data/data/com.termux/files/usr/bin/login-bluepilot
+
+    CHROOT="$HOME/bluepilot_env_ubuntu${UBUNTU_VERSION//./}"
+    mkdir -p "$CHROOT"
+    download_rootfs
+    tar xfp "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" -C "$CHROOT"
+
+    echo "#!/data/data/com.termux/files/usr/bin/bash
+
+    mkdir -p $CHROOT/sdcard
+
+    unset LD_PRELOAD
+    command=\"proot\"
+    command+=\" --link2symlink\"
+    command+=\" -r $CHROOT\"
+    command+=\" -b /dev\"
+    command+=\" -b /proc\"
+    command+=\" -b /sys\"
+    command+=\" -b $CHROOT/tmp:/dev/shm\"
+    command+=\" -b /data/data/com.termux\"
+    command+=\" -b /sdcard\"
+    command+=\" -b /mnt\"
+    command+=\" -w /root\"
+    command+=\" /usr/bin/env -i\"
+    command+=\" HOME=/root\"
+    command+=\" PATH=/usr/local/sbin:/usr/local/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/games:/usr/local/games\"
+    command+=\" TERM=\$TERM\"
+    command+=\" LANG=C.UTF-8\"
+    command+=\" /bin/bash --login\"
+    com=\"\$@\"
+    if [ -z \"\$1\" ];then
+        exec \$command
+    else
+        \$command -c \"\$com\"
+    fi
+    " >> /data/data/com.termux/files/usr/bin/login-bluepilot
     chmod +x /data/data/com.termux/files/usr/bin/login-bluepilot
 
-    ln -rsf $PREFIX/var/lib/proot-distro/installed-rootfs/ubuntu $HOME/bluepilot_env
+    ln -rsf "$CHROOT" "$HOME/bluepilot_env"
 
-    echo -e "sshd \ntermux-wake-lock \nproot-distro login ubuntu --no-kill-on-exit -- eval \"cd bluepilot && ANDROID_DATA='' ./launch_bluepilot.sh\"" > $HOME/boot_bluepilot
+    echo -e "sshd \ntermux-wake-lock \nlogin-bluepilot \"cd bluepilot && ./launch_bluepilot.sh\"" > $HOME/boot_bluepilot
     chmod +x $HOME/boot_bluepilot
 
-    success "Bluepilot non-root environment installed! login with 'login-bluepilot'"
+    success "Bluepilot non-root environment installed ($UBUNTU_VERSION)! login with 'login-bluepilot'"
 }
 
 setup_root_env() {
     info "Preparing to install bluepilot root env ..."
     pkg install tsu
-    ROOTFS_TAR="ubuntu-focal-core-cloudimg-arm64-root-2020.12.10.tar.gz"
-    wget -q --show-progress --no-clobber --tries=5 https://github.com/termux/proot-distro/releases/download/v1.2-ubuntu-focal-rootfs/$ROOTFS_TAR -P /sdcard/flowpilot/Downloads/
+    download_rootfs
 
-    CHROOT=$HOME/bluepilot_env_root
-    mkdir -p $CHROOT
-    sudo tar xfp /sdcard/flowpilot/Downloads/$ROOTFS_TAR -C $CHROOT
+    CHROOT="$HOME/bluepilot_env_ubuntu${UBUNTU_VERSION//./}_root"
+    mkdir -p "$CHROOT"
+    sudo tar xfp "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" -C "$CHROOT"
 
     rm -f /data/data/com.termux/files/usr/bin/login-bluepilot-root
     echo "#!/data/data/com.termux/files/usr/bin/bash
@@ -109,18 +176,16 @@ setup_root_env() {
     " >> /data/data/com.termux/files/usr/bin/login-bluepilot-root
     chmod +x /data/data/com.termux/files/usr/bin/login-bluepilot-root
 
-    echo -e "sshd \ntermux-wake-lock \nsudo login-bluepilot-root \"cd bluepilot && ANDROID_DATA='' ./launch_bluepilot.sh\"" > $HOME/boot_bluepilot
+    echo -e "sshd \ntermux-wake-lock \nsudo login-bluepilot-root \"cd bluepilot && ./launch_bluepilot.sh\"" > $HOME/boot_bluepilot
     chmod +x $HOME/boot_bluepilot
 
-    success "Bluepilot root environment installed. login with 'sudo login-bluepilot-root'"
+    success "Bluepilot root environment installed ($UBUNTU_VERSION). login with 'sudo login-bluepilot-root'"
 }
 
-if [[ $1 = '--root' ]]; then
+if [[ $ROOT_MODE -eq 1 ]]; then
     base_setup
     setup_root_env
-elif [[ ! $1 ]]; then
+else
     base_setup
     setup_nonroot_env
-else
-    fail "invalid arguements provided"
 fi
