@@ -13,6 +13,41 @@ from openpilot.system.hardware import HARDWARE
 from openpilot.common.swaglog import cloudlog
 
 
+def is_android() -> bool:
+  return "ANDROID_DATA" in os.environ
+
+
+def is_android_rooted() -> bool:
+  if not is_android():
+    return False
+  try:
+    os.listdir("/sys")
+    return True
+  except PermissionError:
+    return False
+
+
+def main_android_no_root() -> None:
+  cloudlog.warning("Running pandad in no-root Android mode")
+
+  while True:
+    try:
+      usb_fd_list = eval(subprocess.check_output(["termux-usb", "-l"], encoding="utf8").rstrip())
+      if len(usb_fd_list) == 0:
+        cloudlog.info("No USB devices found via termux-usb, retrying")
+        time.sleep(0.5)
+        continue
+      usb_fd = usb_fd_list[0]
+    except Exception as exc:
+      cloudlog.exception(f"termux-usb listing failed: {exc}")
+      time.sleep(0.5)
+      continue
+
+    os.environ['MANAGER_DAEMON'] = 'pandad'
+    os.chdir(os.path.join(BASEDIR, "selfdrive/pandad"))
+    subprocess.run(["termux-usb", "-r", "-e", "./pandad", usb_fd], check=True)
+
+
 def get_expected_signature(panda: Panda) -> bytes:
   try:
     fn = os.path.join(FW_PATH, panda.get_mcu_type().config.app_fn)
@@ -76,6 +111,9 @@ def check_panda_support(panda) -> bool:
 
 
 def main() -> None:
+  if is_android() and not is_android_rooted():
+    main_android_no_root()
+    return
   # signal pandad to close the relay and exit
   def signal_handler(signum, frame):
     cloudlog.info(f"Caught signal {signum}, exiting")
