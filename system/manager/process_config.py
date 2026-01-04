@@ -4,7 +4,7 @@ import platform
 
 from cereal import car, custom
 from openpilot.common.params import Params
-from openpilot.system.hardware import PC, TICI
+from openpilot.system.hardware import ANDROID, PC, TICI
 from openpilot.system.manager.process import PythonProcess, NativeProcess, DaemonProcess
 from openpilot.system.hardware.hw import Paths
 
@@ -14,6 +14,7 @@ from sunnypilot.models.helpers import get_active_model_runner
 from sunnypilot.sunnylink.utils import sunnylink_need_register, sunnylink_ready, use_sunnylink_uploader
 
 WEBCAM = os.getenv("USE_WEBCAM") is not None
+ANDROID_APP = ANDROID and os.getenv("ANDROID_APP", "1") == "1"
 
 def driverview(started: bool, params: Params, CP: car.CarParams) -> bool:
   return started or params.get_bool("IsDriverViewEnabled")
@@ -123,18 +124,18 @@ procs = [
   NativeProcess("stream_encoderd", "system/loggerd", ["./encoderd", "--stream"], notcar),
   PythonProcess("logmessaged", "system.logmessaged", always_run),
 
-  NativeProcess("camerad", "system/camerad", ["./camerad"], driverview, enabled=not WEBCAM),
-  PythonProcess("webcamerad", "tools.webcam.camerad", driverview, enabled=WEBCAM),
+  NativeProcess("camerad", "system/camerad", ["./camerad"], driverview, enabled=(not WEBCAM and not ANDROID_APP)),
+  PythonProcess("webcamerad", "tools.webcam.camerad", driverview, enabled=(WEBCAM and not ANDROID_APP)),
   PythonProcess("proclogd", "system.proclogd", only_onroad, enabled=platform.system() != "Darwin"),
   PythonProcess("journald", "system.journald", only_onroad, platform.system() != "Darwin"),
   PythonProcess("micd", "system.micd", iscar),
   PythonProcess("timed", "system.timed", always_run, enabled=not PC),
 
-  PythonProcess("modeld", "selfdrive.modeld.modeld", and_(only_onroad, is_stock_model)),
-  PythonProcess("dmonitoringmodeld", "selfdrive.modeld.dmonitoringmodeld", driverview, enabled=(WEBCAM or not PC)),
+  PythonProcess("modeld", "selfdrive.modeld.modeld", and_(only_onroad, is_stock_model), enabled=not ANDROID_APP),
+  PythonProcess("dmonitoringmodeld", "selfdrive.modeld.dmonitoringmodeld", driverview, enabled=((WEBCAM or not PC) and not ANDROID_APP)),
 
-  PythonProcess("sensord", "system.sensord.sensord", only_onroad, enabled=not PC),
-  NativeProcess("ui", "selfdrive/ui", ["./ui"], always_run, watchdog_max_dt=(5 if not PC else None)),
+  PythonProcess("sensord", "system.sensord.sensord", only_onroad, enabled=(not PC and not ANDROID_APP)),
+  NativeProcess("ui", "selfdrive/ui", ["./ui"], always_run, enabled=not ANDROID_APP, watchdog_max_dt=(5 if not PC else None)),
   PythonProcess("raylib_ui", "selfdrive.ui.ui", always_run, enabled=False, watchdog_max_dt=(5 if not PC else None)),
   PythonProcess("soundd", "selfdrive.ui.soundd", only_onroad),
   PythonProcess("locationd", "selfdrive.locationd.locationd", only_onroad),
@@ -146,7 +147,7 @@ procs = [
   PythonProcess("selfdrived", "selfdrive.selfdrived.selfdrived", only_onroad),
   PythonProcess("card", "selfdrive.car.card", only_onroad),
   PythonProcess("deleter", "system.loggerd.deleter", always_run),
-  PythonProcess("dmonitoringd", "selfdrive.monitoring.dmonitoringd", driverview, enabled=(WEBCAM or not PC)),
+  PythonProcess("dmonitoringd", "selfdrive.monitoring.dmonitoringd", driverview, enabled=((WEBCAM or not PC) and not ANDROID_APP)),
   PythonProcess("qcomgpsd", "system.qcomgpsd.qcomgpsd", qcomgps, enabled=TICI),
   PythonProcess("pandad", "selfdrive.pandad.pandad", always_run),
   PythonProcess("paramsd", "selfdrive.locationd.paramsd", only_onroad),
@@ -179,8 +180,8 @@ procs = [
 procs += [
   # Models
   PythonProcess("models_manager", "sunnypilot.models.manager", only_offroad),
-  NativeProcess("modeld_snpe", "sunnypilot/modeld", ["./modeld"], and_(only_onroad, is_snpe_model)),
-  NativeProcess("modeld_tinygrad", "sunnypilot/modeld_v2", ["./modeld"], and_(only_onroad, is_tinygrad_model)),
+  NativeProcess("modeld_snpe", "sunnypilot/modeld", ["./modeld"], and_(only_onroad, is_snpe_model), enabled=not ANDROID_APP),
+  NativeProcess("modeld_tinygrad", "sunnypilot/modeld_v2", ["./modeld"], and_(only_onroad, is_tinygrad_model), enabled=not ANDROID_APP),
 
   # Backup
   PythonProcess("backup_manager", "sunnypilot.sunnylink.backups.manager", and_(only_offroad, sunnylink_ready_shim)),
