@@ -5,6 +5,7 @@ import signal
 import sys
 import time
 import traceback
+from pathlib import Path
 
 from cereal import log
 import cereal.messaging as messaging
@@ -34,6 +35,17 @@ def manager_init() -> None:
   build_metadata = get_build_metadata()
 
   params = Params()
+
+  if os.getenv("ANDROID_DATA"):
+    # Android app cannot access Termux internal paths; sync assets to external storage.
+    internal_assets = os.path.join(BASEDIR, "selfdrive/assets")
+    external_assets = os.path.join(Paths.android_root(), "selfdrive")
+    Path(external_assets).mkdir(parents=True, exist_ok=True)
+    try:
+      import subprocess
+      subprocess.check_output(["rsync", "-r", "-u", internal_assets, external_assets])
+    except Exception as exc:
+      cloudlog.exception(f"Android asset sync failed: {exc}")
 
   # Initialize custom parameters from params.json
   initialize_custom_params(params)
