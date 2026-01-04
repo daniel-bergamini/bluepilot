@@ -1,4 +1,4 @@
-include 'headless', 'android', 'desktop'
+include 'android'
 include ':ui'
 project(':ui').projectDir = file('selfdrive/ui')
 include ':messaging'
