@@ -119,6 +119,10 @@ ensure_username() {
 
 configure_rootfs() {
     local dest="$1"
+    if [[ ! -d "$dest" ]]; then
+        fail "rootfs path missing: $dest"
+    fi
+    mkdir -p "$dest/etc" "$dest/root"
     add_to_file "nameserver 8.8.8.8" "$dest/etc/resolv.conf"
     add_to_file "export ANDROID_DATA=''" "$dest/root/.bashrc"
     add_to_file "export PIP_ROOT_USER_ACTION=ignore" "$dest/root/.bashrc"
