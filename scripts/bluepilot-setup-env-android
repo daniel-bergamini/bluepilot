@@ -85,6 +85,33 @@ download_rootfs() {
     fi
 }
 
+extract_rootfs() {
+    local archive="$1"
+    local dest="$2"
+    local log_file
+    log_file="$(mktemp)"
+
+    set +e
+    tar xfp "$archive" -C "$dest" \
+        --no-same-owner --no-same-permissions --numeric-owner \
+        --exclude='dev/*' --hard-dereference 2>"$log_file"
+    tar_status=$?
+    set -e
+
+    if [[ $tar_status -ne 0 ]]; then
+        if grep -qv "Cannot hard link" "$log_file"; then
+            cat "$log_file"
+            rm -f "$log_file"
+            fail "rootfs extraction failed"
+        fi
+    fi
+    rm -f "$log_file"
+
+    if [[ ! -x "$dest/bin/bash" ]]; then
+        fail "rootfs extraction incomplete: missing /bin/bash"
+    fi
+}
+
 setup_nonroot_env() {
     info "Preparing to install bluepilot non-root env ..."
 
@@ -93,7 +120,7 @@ setup_nonroot_env() {
     CHROOT="$HOME/bluepilot_env_ubuntu${UBUNTU_VERSION//./}"
     mkdir -p "$CHROOT"
     download_rootfs
-    tar xfp "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" -C "$CHROOT"
+    extract_rootfs "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" "$CHROOT"
 
     echo "#!/data/data/com.termux/files/usr/bin/bash
 
@@ -141,7 +168,7 @@ setup_root_env() {
 
     CHROOT="$HOME/bluepilot_env_ubuntu${UBUNTU_VERSION//./}_root"
     mkdir -p "$CHROOT"
-    sudo tar xfp "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" -C "$CHROOT"
+    extract_rootfs "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" "$CHROOT"
 
     rm -f /data/data/com.termux/files/usr/bin/login-bluepilot-root
     echo "#!/data/data/com.termux/files/usr/bin/bash
