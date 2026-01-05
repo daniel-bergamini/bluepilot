@@ -56,7 +56,11 @@ else
 fi
 
 add_to_file() {
-    grep -qF -- "$1" "$2" || echo "$1" >> "$2"
+    local line="$1"
+    local target="$2"
+    mkdir -p "$(dirname "$target")"
+    touch "$target"
+    grep -qF -- "$line" "$target" || echo "$line" >> "$target"
 }
 
 base_setup() {
