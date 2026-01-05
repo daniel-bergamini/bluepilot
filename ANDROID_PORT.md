@@ -2,16 +2,17 @@ Android Port Maintenance
 
 Initial checkout (host or proot)
 1) Clone and switch to the Android branch:
-   - git clone --depth 1 https://github.com/daniel-bergamini/bluepilot.git
+   - git clone --depth 1 --branch android-port https://github.com/daniel-bergamini/bluepilot.git
    - cd bluepilot
    - git checkout android-port
-2) Pull LFS assets if needed:
-   - git lfs install
-   - git lfs pull
-3) Initialize submodules:
+   - If you already cloned without the branch: git fetch origin android-port:android-port
+2) Initialize submodules:
    - git submodule update --init --depth 1
 
 First-Run (Android proot)
+0) Enter the Ubuntu rootfs shell (from Termux):
+   - login-bluepilot
+   - cd /data/data/com.termux/files/home/bluepilot
 1) Ensure submodules are available:
    - git submodule update --init --depth 1 msgq_repo rednose_repo panda tinygrad_repo teleoprtc_repo
 2) Create a per-project venv (avoid python version conflicts):
@@ -21,9 +22,13 @@ First-Run (Android proot)
    - apt install -y build-essential scons pkg-config cython3 capnproto libcapnp-dev qt5-qmake qtchooser
    - pip install --upgrade pip setuptools wheel
    - pip install pycapnp pyzmq numpy Cython pkgconfig
-4) Build msgq only (avoid full SConstruct):
+4) If git-lfs is missing in the rootfs:
+   - apt update
+   - apt install -y git-lfs
+   - git lfs install
+5) Build msgq only (avoid full SConstruct):
    - python -m SCons -C msgq_repo -j2
-5) Run manager with Android env:
+6) Run manager with Android env:
    - export PYTHONPATH=$PWD
    - export CAPNP_PATH=$PWD:$PWD/cereal:$PWD/cereal/include
    - export ANDROID_STORAGE_ROOT=/sdcard/flowpilot

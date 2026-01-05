@@ -175,6 +175,7 @@ setup_nonroot_env() {
     extract_rootfs "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" "$CHROOT"
     ensure_username "$CHROOT"
     configure_rootfs "$CHROOT"
+    proot_exec "apt update && apt install -y git-lfs"
 
     echo "#!/data/data/com.termux/files/usr/bin/bash
 
@@ -224,6 +225,7 @@ setup_root_env() {
     mkdir -p "$CHROOT"
     extract_rootfs "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" "$CHROOT"
     configure_rootfs "$CHROOT"
+    proot_exec "apt update && apt install -y git-lfs"
 
     rm -f /data/data/com.termux/files/usr/bin/login-bluepilot-root
     echo "#!/data/data/com.termux/files/usr/bin/bash
