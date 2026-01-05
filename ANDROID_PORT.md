@@ -58,7 +58,7 @@ First-Run (Android proot)
    - scripts/bluepilot-run-android.sh
 
 Env setup script
-- Default rootfs: Ubuntu 24.04 (noble minimal).
+- Default rootfs: Ubuntu 24.04 (noble server rootfs).
 - Old rootfs flag: --ubuntu20 (focal).
 - Root mode: --root
 Examples:

@@ -50,8 +50,8 @@ if [[ $USE_UBUNTU20 -eq 1 ]]; then
     ROOTFS_URL="https://github.com/termux/proot-distro/releases/download/v1.2-ubuntu-focal-rootfs/$ROOTFS_TAR"
 else
     UBUNTU_VERSION="24.04"
-    ROOTFS_TAR="ubuntu-24.04-minimal-cloudimg-arm64-root.tar.gz"
-    ROOTFS_URL="https://cloud-images.ubuntu.com/minimal/releases/noble/release/$ROOTFS_TAR"
+    ROOTFS_TAR="noble-server-cloudimg-arm64-root.tar.xz"
+    ROOTFS_URL="https://cloud-images.ubuntu.com/noble/current/$ROOTFS_TAR"
 fi
 
 add_to_file() {
@@ -79,7 +79,10 @@ base_setup() {
 }
 
 download_rootfs() {
-    wget -q --show-progress --no-clobber --tries=5 "$ROOTFS_URL" -P /sdcard/flowpilot/Downloads/
+    mkdir -p /sdcard/flowpilot/Downloads
+    if ! wget --show-progress --tries=5 "$ROOTFS_URL" -P /sdcard/flowpilot/Downloads/; then
+        fail "failed to download rootfs from $ROOTFS_URL"
+    fi
 }
 
 setup_nonroot_env() {
