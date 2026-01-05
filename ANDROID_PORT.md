@@ -2,7 +2,7 @@ Android Port Maintenance
 
 Initial checkout (host or proot)
 1) Clone and switch to the Android branch:
-   - git clone https://github.com/daniel-bergamini/bluepilot.git
+   - git clone --depth 1 https://github.com/daniel-bergamini/bluepilot.git
    - cd bluepilot
    - git checkout android-port
 2) Pull LFS assets if needed:
@@ -35,16 +35,11 @@ Env setup script
 - Default rootfs: Ubuntu 24.04 (noble server rootfs).
 - Old rootfs flag: --ubuntu20 (focal).
 - Root mode: --root
+- The setup script also configures DNS, ANDROID_DATA, PIP_ROOT_USER_ACTION, and Android `aid_*` groups.
 Examples:
   - scripts/bluepilot-setup-env-android
   - scripts/bluepilot-setup-env-android --ubuntu20
   - scripts/bluepilot-setup-env-android --root
-
-Flowpilot gotchas to mirror (optional)
-- DNS: flowpilot appends `nameserver 8.8.8.8` to `/etc/resolv.conf` in the rootfs.
-- ANDROID_DATA: flowpilot exports `ANDROID_DATA=''` to avoid OpenPilot Android detection issues.
-- PIP_ROOT_USER_ACTION: flowpilot exports `PIP_ROOT_USER_ACTION=ignore` for pip under root.
-- Android groups: flowpilot adds `aid_*` groups (3001–3005) and assigns them to root.
 
 Notes on Flowpilot APK
 - APK expects assets in /sdcard/flowpilot/selfdrive.
