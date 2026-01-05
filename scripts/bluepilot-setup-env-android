@@ -86,6 +86,23 @@ download_rootfs() {
     fi
 }
 
+ensure_username() {
+    local dest="$1"
+    local user_name="bluepilot"
+    local user_id
+    local group_id
+    user_id="$(id -u)"
+    group_id="$(id -g)"
+
+    if ! grep -qE "^${user_name}:" "$dest/etc/passwd"; then
+        echo "${user_name}:x:${user_id}:${group_id}:${user_name}:/root:/bin/bash" >> "$dest/etc/passwd"
+    fi
+
+    if ! grep -qE "^${user_name}:" "$dest/etc/group"; then
+        echo "${user_name}:x:${group_id}:" >> "$dest/etc/group"
+    fi
+}
+
 extract_rootfs() {
     local archive="$1"
     local dest="$2"
@@ -122,6 +139,7 @@ setup_nonroot_env() {
     mkdir -p "$CHROOT"
     download_rootfs
     extract_rootfs "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" "$CHROOT"
+    ensure_username "$CHROOT"
 
     echo "#!/data/data/com.termux/files/usr/bin/bash
 
