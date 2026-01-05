@@ -86,6 +86,16 @@ download_rootfs() {
     fi
 }
 
+ensure_android_groups() {
+    local dest="$1"
+    local group_file="$dest/etc/group"
+    add_to_file "aid_bt:x:3001:" "$group_file"
+    add_to_file "aid_bt_net:x:3002:" "$group_file"
+    add_to_file "aid_inet:x:3003:" "$group_file"
+    add_to_file "aid_net_raw:x:3004:" "$group_file"
+    add_to_file "aid_admin:x:3005:" "$group_file"
+}
+
 ensure_username() {
     local dest="$1"
     local user_name="bluepilot"
@@ -101,6 +111,14 @@ ensure_username() {
     if ! grep -qE "^${user_name}:" "$dest/etc/group"; then
         echo "${user_name}:x:${group_id}:" >> "$dest/etc/group"
     fi
+}
+
+configure_rootfs() {
+    local dest="$1"
+    add_to_file "nameserver 8.8.8.8" "$dest/etc/resolv.conf"
+    add_to_file "export ANDROID_DATA=''" "$dest/root/.bashrc"
+    add_to_file "export PIP_ROOT_USER_ACTION=ignore" "$dest/root/.bashrc"
+    ensure_android_groups "$dest"
 }
 
 extract_rootfs() {
@@ -140,6 +158,7 @@ setup_nonroot_env() {
     download_rootfs
     extract_rootfs "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" "$CHROOT"
     ensure_username "$CHROOT"
+    configure_rootfs "$CHROOT"
 
     echo "#!/data/data/com.termux/files/usr/bin/bash
 
@@ -188,6 +207,7 @@ setup_root_env() {
     CHROOT="$HOME/bluepilot_env_ubuntu${UBUNTU_VERSION//./}_root"
     mkdir -p "$CHROOT"
     extract_rootfs "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" "$CHROOT"
+    configure_rootfs "$CHROOT"
 
     rm -f /data/data/com.termux/files/usr/bin/login-bluepilot-root
     echo "#!/data/data/com.termux/files/usr/bin/bash
