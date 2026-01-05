@@ -119,11 +119,19 @@ ensure_username() {
 
 configure_rootfs() {
     local dest="$1"
+    local resolv_conf="$dest/etc/resolv.conf"
     if [[ ! -d "$dest" ]]; then
         fail "rootfs path missing: $dest"
     fi
     mkdir -p "$dest/etc" "$dest/root"
-    add_to_file "nameserver 8.8.8.8" "$dest/etc/resolv.conf"
+    if [[ -L "$resolv_conf" ]]; then
+        local target_path
+        target_path="$(readlink "$resolv_conf")"
+        if [[ "$target_path" != /* && ! -e "$dest/etc/$target_path" ]] || [[ "$target_path" == /* && ! -e "$dest/$target_path" ]]; then
+            rm -f "$resolv_conf"
+        fi
+    fi
+    add_to_file "nameserver 8.8.8.8" "$resolv_conf"
     add_to_file "export ANDROID_DATA=''" "$dest/root/.bashrc"
     add_to_file "export PIP_ROOT_USER_ACTION=ignore" "$dest/root/.bashrc"
     ensure_android_groups "$dest"
