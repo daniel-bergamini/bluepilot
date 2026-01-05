@@ -16,12 +16,11 @@ First-Run (Android proot)
 1) Ensure submodules are available:
    - git submodule update --init --depth 1 msgq_repo rednose_repo panda tinygrad_repo teleoprtc_repo
 2) Create a per-project venv (avoid python version conflicts):
-   - python3.9 -m venv .venv
+   - python3 -m venv .venv
    - . .venv/bin/activate
 3) Install runtime/build deps:
-   - apt install -y build-essential scons pkg-config cython3 capnproto libcapnp-dev qt5-qmake qtchooser
    - pip install --upgrade pip setuptools wheel
-   - pip install pycapnp pyzmq numpy Cython pkgconfig
+   - pip install -e .
 4) If git-lfs is missing in the rootfs:
    - apt update
    - apt install -y git-lfs
