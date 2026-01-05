@@ -37,6 +37,17 @@ Notes
 - Keep Android glue changes in narrow files and directories to reduce conflicts.
 - Maintain a short list of Android-specific touch points in this file.
 
+Initial checkout (host or proot)
+1) Clone and switch to the Android branch:
+   - git clone git@github.com:daniel-bergamini/bluepilot.git
+   - cd bluepilot
+   - git checkout android-port
+2) Pull LFS assets if needed:
+   - git lfs install
+   - git lfs pull
+3) Initialize submodules:
+   - git submodule update --init --depth 1
+
 First-Run (Android proot)
 1) Ensure submodules are available:
    - git submodule update --init --depth 1 msgq_repo rednose_repo panda tinygrad_repo teleoprtc_repo
