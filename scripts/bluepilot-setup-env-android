@@ -16,6 +16,7 @@ success() {
 
 fail() {
     printf "\033[0;31m$@\033[0m\n"
+    exit 1
 }
 
 proot_exec() {
@@ -99,7 +100,7 @@ extract_rootfs() {
     set -e
 
     if [[ $tar_status -ne 0 ]]; then
-        if grep -qv "Cannot hard link" "$log_file"; then
+        if grep -qv -e "Cannot hard link" -e "Exiting with failure status" "$log_file"; then
             cat "$log_file"
             rm -f "$log_file"
             fail "rootfs extraction failed"
