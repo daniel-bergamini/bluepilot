@@ -35,6 +35,15 @@ First-Run (Android proot)
 6) Convenience runner (optional):
    - scripts/bluepilot-run-android.sh
 
+Notes: Catch2 v2 headers on Ubuntu 24.04
+- Ubuntu 24.04's `catch2` package installs Catch2 v3, which does not provide `catch2/catch.hpp`.
+- Workaround (manual install of v2):
+  - git clone https://github.com/catchorg/Catch2.git
+  - cd Catch2
+  - git checkout v2.x
+  - cmake -Bbuild -H. -DBUILD_TESTING=OFF
+  - sudo cmake --build build/ --target install
+
 Env setup script
 - Default rootfs: Ubuntu 24.04 (noble server rootfs).
 - Old rootfs flag: --ubuntu20 (focal).
