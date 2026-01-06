@@ -21,12 +21,16 @@ First-Run (Android proot)
 3) Install runtime/build deps:
    - pip install --upgrade pip setuptools wheel
    - pip install -e .
+   - Rootfs apt deps (run as root inside the Ubuntu rootfs):
+     - apt install -y build-essential scons pkg-config cython3 capnproto libcapnp-dev qt5-qmake qtchooser qtbase5-dev qtbase5-dev-tools qttools5-dev-tools git-lfs python3-venv python3-dev clang binutils libzmq3-dev ocl-icd-opencl-dev portaudio19-dev libasound2-dev libeigen3-dev libusb-1.0-0-dev libgles2-mesa-dev libzstd-dev libavformat-dev libavcodec-dev libavutil-dev libswscale-dev libjpeg-dev libbz2-dev libcurl4-openssl-dev libqt5serialbus5-dev libqt5charts5-dev gcc-arm-none-eabi
 4) If git-lfs is missing in the rootfs:
    - apt update
    - apt install -y git-lfs
    - git lfs install
 5) Build msgq only (avoid full SConstruct):
    - python -m SCons -C msgq_repo -j2
+6) Full build (if needed after msgq):
+   - python -m SCons -j2
 6) Run manager with Android env:
    - export PYTHONPATH=$PWD
    - export CAPNP_PATH=$PWD:$PWD/cereal:$PWD/cereal/include
