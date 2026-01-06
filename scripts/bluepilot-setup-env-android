@@ -180,7 +180,7 @@ setup_nonroot_env() {
     extract_rootfs "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" "$CHROOT"
     ensure_username "$CHROOT"
     configure_rootfs "$CHROOT"
-    rootfs_apt_install build-essential scons pkg-config cython3 capnproto libcapnp-dev qt5-qmake qtchooser git-lfs python3-venv portaudio19-dev binutils clang libzmq3-dev ocl-icd-opencl-dev
+    rootfs_apt_install build-essential scons pkg-config cython3 capnproto libcapnp-dev qt5-qmake qtchooser git-lfs python3-venv portaudio19-dev binutils clang libzmq3-dev ocl-icd-opencl-dev catch2
 
     echo "#!/data/data/com.termux/files/usr/bin/bash
 
@@ -230,7 +230,7 @@ setup_root_env() {
     mkdir -p "$CHROOT"
     extract_rootfs "/sdcard/flowpilot/Downloads/$ROOTFS_TAR" "$CHROOT"
     configure_rootfs "$CHROOT"
-    rootfs_apt_install build-essential scons pkg-config cython3 capnproto libcapnp-dev qt5-qmake qtchooser git-lfs python3-venv portaudio19-dev binutils clang libzmq3-dev ocl-icd-opencl-dev
+    rootfs_apt_install build-essential scons pkg-config cython3 capnproto libcapnp-dev qt5-qmake qtchooser git-lfs python3-venv portaudio19-dev binutils clang libzmq3-dev ocl-icd-opencl-dev catch2
 
     rm -f /data/data/com.termux/files/usr/bin/login-bluepilot-root
     echo "#!/data/data/com.termux/files/usr/bin/bash
