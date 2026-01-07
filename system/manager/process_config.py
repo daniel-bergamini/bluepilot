@@ -15,6 +15,7 @@ from sunnypilot.sunnylink.utils import sunnylink_need_register, sunnylink_ready,
 
 WEBCAM = os.getenv("USE_WEBCAM") is not None
 ANDROID_APP = ANDROID and os.getenv("ANDROID_APP", "1") == "1"
+KEYVALD_STANDALONE = os.getenv("KEYVALD_STANDALONE") == "1"
 
 def driverview(started: bool, params: Params, CP: car.CarParams) -> bool:
   return started or params.get_bool("IsDriverViewEnabled")
@@ -120,7 +121,7 @@ procs = [
   DaemonProcess("manage_athenad", "system.athena.manage_athenad", "AthenadPid"),
 
   PythonProcess("android_app", "system.manager.android_app", always_run, enabled=ANDROID_APP),
-  PythonProcess("keyvald", "system.manager.keyvald", always_run, enabled=ANDROID_APP),
+  PythonProcess("keyvald", "system.manager.keyvald", always_run, enabled=(ANDROID_APP and not KEYVALD_STANDALONE)),
 
   NativeProcess("loggerd", "system/loggerd", ["./loggerd"], logging),
   NativeProcess("encoderd", "system/loggerd", ["./encoderd"], only_onroad),
