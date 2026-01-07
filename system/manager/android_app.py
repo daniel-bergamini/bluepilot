@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import shutil
 import subprocess
 import time
 
@@ -19,7 +20,10 @@ def app_running() -> bool:
 
 def launch_app() -> None:
   try:
-    subprocess.run(["am", "start", "--user", "0", "-n", APP_COMPONENT], check=False)
+    am_cmd = shutil.which("am") or "/system/bin/am"
+    if not os.path.exists(am_cmd):
+      raise FileNotFoundError(f"am not found at {am_cmd}")
+    subprocess.run([am_cmd, "start", "--user", "0", "-n", APP_COMPONENT], check=False)
   except Exception as exc:
     cloudlog.exception(f"android_app launch failed: {exc}")
 
