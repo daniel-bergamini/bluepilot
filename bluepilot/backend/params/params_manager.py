@@ -16,7 +16,15 @@ from typing import Dict, List, Optional, Any, Union, Tuple
 logger = logging.getLogger(__name__)
 
 # Import Params with fallback for direct file reading
-PARAMS_DIR = "/data/params/d"
+def _params_dir() -> str:
+    params_root = os.getenv("PARAMS_ROOT")
+    if params_root:
+        return os.path.join(params_root, "d")
+    if os.getenv("ANDROID_DATA"):
+        return "/sdcard/flowpilot/params/d"
+    return "/data/params/d"
+
+PARAMS_DIR = _params_dir()
 USE_DIRECT_FILE_READING = False
 _PARAM_TYPE_CACHE: Optional[Dict[str, str]] = None
 _PARAM_ATTRIBUTES_CACHE: Optional[Dict[str, List[str]]] = None
@@ -35,8 +43,8 @@ except ImportError as e:
 
     # Fallback Params class that reads directly from filesystem
     class Params:
-        def __init__(self, params_dir=PARAMS_DIR):
-            self.params_dir = params_dir
+        def __init__(self, params_dir=None):
+            self.params_dir = params_dir or _params_dir()
 
         def _read_file(self, key):
             """Read param file directly"""
@@ -285,14 +293,15 @@ def _load_param_attributes_cache() -> Dict[str, List[str]]:
 def write_param_direct(key: str, value: Any) -> Tuple[bool, Optional[str]]:
     """Directly write a parameter file when Params API rejects the key."""
     try:
-        os.makedirs(PARAMS_DIR, exist_ok=True)
+        params_dir = _params_dir()
+        os.makedirs(params_dir, exist_ok=True)
 
         if isinstance(value, bool):
             data = b"1" if value else b"0"
         else:
             data = str(value).encode('utf-8')
 
-        param_path = os.path.join(PARAMS_DIR, key)
+        param_path = os.path.join(params_dir, key)
         with open(param_path, 'wb') as f:
             f.write(data)
 
@@ -337,7 +346,9 @@ def get_all_params(params: Optional[Params] = None) -> Dict[str, Any]:
     result = {}
 
     # Try to get all params by listing the params directory
-    params_dir = "/data/params/d" if os.path.exists("/data/params/d") else None
+    params_dir = _params_dir()
+    if not os.path.exists(params_dir):
+        params_dir = None
 
     if params_dir and os.path.exists(params_dir):
         # List all param files
@@ -498,7 +509,9 @@ def _build_param_entry(key: str, params: Optional[Params], params_dir: Optional[
         params = Params()
 
     if params_dir is None:
-        params_dir = PARAMS_DIR if os.path.exists(PARAMS_DIR) else None
+        params_dir = _params_dir()
+        if not os.path.exists(params_dir):
+            params_dir = None
 
     # Get ParamKeyAttributes from params_keys.h
     attributes_cache = _load_param_attributes_cache()
