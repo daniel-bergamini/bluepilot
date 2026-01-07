@@ -29,7 +29,7 @@ def launch_app() -> None:
     if not am_cmd:
       raise FileNotFoundError("am not found (checked PATH, /system/bin/am, /host-rootfs/system/bin/am)")
     if am_cmd.startswith("/host-rootfs/"):
-      subprocess.run(["/host-rootfs/system/bin/sh", am_cmd, "start", "--user", "0", "-n", APP_COMPONENT], check=False)
+      subprocess.run(["/system/bin/sh", am_cmd, "start", "--user", "0", "-n", APP_COMPONENT], check=False)
     else:
       subprocess.run([am_cmd, "start", "--user", "0", "-n", APP_COMPONENT], check=False)
   except Exception as exc:
