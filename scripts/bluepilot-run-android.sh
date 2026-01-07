@@ -16,4 +16,10 @@ export ANDROID_STORAGE_ROOT="${ANDROID_STORAGE_ROOT:-/sdcard/flowpilot}"
 export PARAMS_ROOT="${PARAMS_ROOT:-/data/data/com.termux/files/home/flowpilot/params}"
 export ZMQ_MESSAGING_ADDRESS="${ZMQ_MESSAGING_ADDRESS:-0.0.0.0}"
 
+if [ "${KEYVALD_STANDALONE:-0}" = "1" ]; then
+  python -m openpilot.system.manager.keyvald &
+  KEYVALD_PID=$!
+  trap 'kill $KEYVALD_PID 2>/dev/null || true' EXIT
+fi
+
 ./launch_bluepilot.sh
