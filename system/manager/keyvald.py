@@ -25,30 +25,42 @@ class ParamsServer:
   def put_thread(exit_event: threading.Event) -> None:
     while not exit_event.is_set():
       key, val = sock_put.recv_multipart()
-      params.put(key, val)
-      sock_put.send(b"1")
+      key_str = key.decode(errors="ignore")
+      try:
+        params.put(key_str, val)
+        sock_put.send(b"1")
+      except Exception:
+        sock_put.send(b"0")
 
   @staticmethod
   def get_thread(exit_event: threading.Event) -> None:
     while not exit_event.is_set():
       key = sock_get.recv()
-      data = params.get(key)
-      if data is None:
+      key_str = key.decode(errors="ignore")
+      try:
+        data = params.get(key_str)
+        if data is None:
+          payload = b""
+        elif isinstance(data, bytes):
+          payload = data
+        elif isinstance(data, str):
+          payload = data.encode()
+        else:
+          payload = str(data).encode()
+      except Exception:
         payload = b""
-      elif isinstance(data, bytes):
-        payload = data
-      elif isinstance(data, str):
-        payload = data.encode()
-      else:
-        payload = str(data).encode()
       sock_get.send(payload)
 
   @staticmethod
   def delete_thread(exit_event: threading.Event) -> None:
     while not exit_event.is_set():
       key = sock_del.recv()
-      params.remove(key)
-      sock_del.send(b"1")
+      key_str = key.decode(errors="ignore")
+      try:
+        params.remove(key_str)
+        sock_del.send(b"1")
+      except Exception:
+        sock_del.send(b"0")
 
   @staticmethod
   def start() -> None:
