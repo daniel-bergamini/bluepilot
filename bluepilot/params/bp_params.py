@@ -1,10 +1,12 @@
 import json
+import os
+from pathlib import Path
 from typing import Any
 from openpilot.common.params import Params, ParamKeyFlag, ParamKeyType
 from bluepilot.logger.bp_logger import debug, error
 
 # Define the path to the params.json file
-PARAMS_JSON_PATH = "/data/openpilot/bluepilot/params/params.json"
+PARAMS_JSON_PATH = os.environ.get("BP_PARAMS_JSON_PATH", "/data/openpilot/bluepilot/params/params.json")
 SHOW_DEBUG_OUTPUT = False
 
 # Global parameter cache
@@ -52,17 +54,24 @@ def load_params_json() -> dict[str, Any]:
     return _params_data
 
   # Load file and cache results
-  try:
-    with open(PARAMS_JSON_PATH) as f:
-      _params_data = json.load(f)
-      log_debug(f"Successfully loaded params.json from {PARAMS_JSON_PATH}")
-      return _params_data
-  except FileNotFoundError:
-    log_debug(f"Params JSON file not found at {PARAMS_JSON_PATH}")
-    return {"params": []}
-  except json.JSONDecodeError:
-    log_debug(f"Failed to parse JSON from {PARAMS_JSON_PATH}")
-    return {"params": []}
+  search_paths = [Path(PARAMS_JSON_PATH)]
+  fallback_path = Path(__file__).with_name("params.json")
+  if fallback_path not in search_paths:
+    search_paths.append(fallback_path)
+
+  for path in search_paths:
+    try:
+      with open(path) as f:
+        _params_data = json.load(f)
+        log_debug(f"Successfully loaded params.json from {path}")
+        return _params_data
+    except FileNotFoundError:
+      log_debug(f"Params JSON file not found at {path}")
+    except json.JSONDecodeError:
+      log_debug(f"Failed to parse JSON from {path}")
+
+  _params_data = {"params": []}
+  return _params_data
 
 
 def preprocess_params_data() -> None:
