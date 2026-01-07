@@ -20,9 +20,14 @@ def app_running() -> bool:
 
 def launch_app() -> None:
   try:
-    am_cmd = shutil.which("am") or "/system/bin/am"
-    if not os.path.exists(am_cmd):
-      raise FileNotFoundError(f"am not found at {am_cmd}")
+    am_candidates = [
+      shutil.which("am"),
+      "/system/bin/am",
+      "/host-rootfs/system/bin/am",
+    ]
+    am_cmd = next((p for p in am_candidates if p and os.path.exists(p)), None)
+    if not am_cmd:
+      raise FileNotFoundError("am not found (checked PATH, /system/bin/am, /host-rootfs/system/bin/am)")
     subprocess.run([am_cmd, "start", "--user", "0", "-n", APP_COMPONENT], check=False)
   except Exception as exc:
     cloudlog.exception(f"android_app launch failed: {exc}")
