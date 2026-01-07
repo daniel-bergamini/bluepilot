@@ -33,7 +33,15 @@ class ParamsServer:
     while not exit_event.is_set():
       key = sock_get.recv()
       data = params.get(key)
-      sock_get.send(data if data is not None else b"")
+      if data is None:
+        payload = b""
+      elif isinstance(data, bytes):
+        payload = data
+      elif isinstance(data, str):
+        payload = data.encode()
+      else:
+        payload = str(data).encode()
+      sock_get.send(payload)
 
   @staticmethod
   def delete_thread(exit_event: threading.Event) -> None:
