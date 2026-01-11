@@ -15,11 +15,8 @@ from sunnypilot.sunnylink.utils import sunnylink_need_register, sunnylink_ready,
 
 WEBCAM = os.getenv("USE_WEBCAM") is not None
 ANDROID_APP = ANDROID and os.getenv("ANDROID_APP", "1") == "1"
-<<<<<<< Updated upstream
 KEYVALD_STANDALONE = os.getenv("KEYVALD_STANDALONE") == "1"
-=======
 UPDATED_ENABLED = (not ANDROID) or (os.getenv("ENABLE_UPDATED", "0") == "1")
->>>>>>> Stashed changes
 
 def driverview(started: bool, params: Params, CP: car.CarParams) -> bool:
   return started or params.get_bool("IsDriverViewEnabled")
